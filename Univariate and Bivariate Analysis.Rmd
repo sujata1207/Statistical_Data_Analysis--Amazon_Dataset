@@ -1,0 +1,918 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# 
+
+Univariate and Bivariate Analysis
+
+### Team/Group Introduction - Group 11 - Section 01
+
+Vidya Biradar & Sujata Biswas
+
+## *Academic Integrity -*
+
+*We, Vidya, and Sujata, hereby state that we have not communicated with
+or gained information in any way from any person or resource that would
+violate the College's academic integrity policies, and that all work
+presented is our own. In addition, we also agree not to share our work
+in any way, before or after submission, that would violate the College's
+academic integrity policies.*
+
+-   Versions of R and Rstudio R Version:
+
+```{r}
+print(R.version.string)
+```
+
+Rstudio Version RStudio 2022.12.0+353 "Elsbeth Geranium" Release
+(7d165dcfc1b6d300eb247738db2c7076234f6ef0, 2022-12-03) for Windows
+
+Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
+like Gecko) RStudio/2022.12.0+353 Chrome/102.0.5005.167 Electron/19.1.3
+Safari/537.36
+
+-   Packages used in the project:
+
+1.  install.packages("ggplot")
+
+2.  install.packages("plotly")
+
+3.  install.packages("dplyr")
+
+4.  install.packages("hexbin")
+
+```{r}
+#importing a ggplot2 library
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library("hexbin")
+```
+
+Load the Dataset from csv file
+
+```{r}
+#reading a csv file from excel
+amazon<-read.csv("C:/Users/sujat/OneDrive/Documents/DAB 501/a2.csv")
+```
+
+-   Dataset Documentation:
+
+This dataset contains the data of 1K+ Amazon Product's Ratings and
+Reviews as per their details listed on the official website of Amazon
+
+-   Variables/Features:
+
+    | VARIABLE            | MEANING                                                       |
+    |---------------------|---------------------------------------------------------------|
+    | product_id          | Product ID                                                    |
+    | product_name        | Name of the Product                                           |
+    | category            | Category to Which the Product Belongs                         |
+    | discounted_price    | Discounted Price of the Product                               |
+    | actual_price        | Actual Price of the Product                                   |
+    | discount_percentage | Percentage of Discount on the Product                         |
+    | rating              | Rating of the Product                                         |
+    | rating_count        | Number of people who rated for the Amazon rating of a Product |
+    | about_product       | Description about the Product                                 |
+    | user_id             | ID of the user who wrote review for the Product               |
+    | user_name           | Name of the user who wrote review for the Product             |
+    | review_id           | ID of the Review given by the User                            |
+    | review_title        | Brief Review                                                  |
+    | review_content      | Detailed Review                                               |
+    | img_link            | Image Link of the Product                                     |
+    | product_link        | Official Website Link of the Product                          |
+
+-   Data Processing
+
+```{r}
+#Data preprocesing
+amazon$discounted_price <- gsub("[^0-9]", "", amazon$discounted_price)
+amazon$actual_price <- gsub("[^0-9]", "", amazon$actual_price)
+amazon$rating_count <- gsub("[^0-9]", "", amazon$rating_count)
+amazon$discount_percentage <- gsub("[^0-9]", "", amazon$discount_percentage)
+```
+
+The dataset contains columns which are supposed to have only numeric
+values but these contain characters other than numbers, thus, we needed
+to remove these for further processing and analysis. We used gsub
+function to remove prefix and suffix non-numeric values from these
+columns.
+
+Further, as and when necessary, we have converted a few columns into
+numerical type and also have added categorical type of column(s) based
+on other column(s). (*Explanation is provided whenever and wherever data
+is processed.*)
+
+# Plots \| ggplot
+
+## UNIVARIATE ANALYSIS:
+
+### 1. Numerical Variable:
+
+#### a. Visualization of the 'main_category' Variable-
+
+##### Distribution of Counts
+
+As there are lot of categories we needed to categorize them into main
+categories. To achieve this we have used =LEFT(C2, FIND("\|", C2,
+FIND("\|", C2)+1)-1) formula to create a new column called main_category
+which is used to visualize the sales data in each category.
+
+```{r}
+#plot 1
+# visualization of the distribution of counts
+ggplot(data = amazon) +
+  geom_bar(mapping = aes(x = main_category), fill = "thistle3", color = "black") +
+  labs(x = "",y = "",
+  title = "PRODUCT CATEGORIES") +
+theme(axis.text.x = element_text(angle = 45,
+                                 hjust = 1,
+                                 color = "mediumpurple4"),
+  axis.text.y = element_text(color = "mediumpurple4"),
+  plot.title = element_text(face = "bold",
+                            hjust = 0.5,
+                            color = "mediumpurple4"),
+  legend.text = element_text(color = "mediumpurple4"),
+  panel.grid.major = element_line(color = "seashell2"),
+  panel.background = element_rect(fill = "white"))
+```
+
+Visualization (Plot 1 ) is a bar plot that displays the total count of
+the products sold in each category with the y-axis showing the range of
+data from 0 to 500 and x-axis as a main category.
+
+##### Distribution of Proportions
+
+```{r}
+# visualization of the distribution of proportions
+prop_table <-amazon %>% count(main_category) %>%   mutate(props = n / sum(n))
+ggplot(prop_table) +
+  geom_bar(aes(x = "", y = props, fill = main_category),width = 1,stat = "identity") +
+  coord_polar("y", start = 0) +
+  labs(x = "",y = "",
+  title = "PROPORTIONS OF EACH PRODUCT CATEGORY") +
+theme(plot.title = element_text(face  = "bold",hjust = -0.1,color = "darkslategrey"),
+  panel.grid = element_blank(),
+  panel.background = element_rect(fill = "white"),
+  legend.text = element_text(color = "darkslategrey"),
+  legend.position = "right",
+  legend.title = element_blank()) +
+  guides(fill = guide_legend(title = "main category")) +
+  scale_fill_discrete(labels = paste(prop_table$main_category,
+  scales::percent(prop_table$props),sep = " - ")) + 
+  scale_fill_brewer(palette = "Set3") 
+
+```
+
+The above visualization in a pie chart gives us a clear idea about the
+distribution of proportions of each sub-category in the main category
+column.
+
+##### Analysis-
+
+-   [Unusual Observations-]{.underline} From the plot created we can
+    observe that the 'Electronics' and 'Home & Kitchen' categories have
+    the highest number of products, while the 'Others' category has the
+    lowest number of products. This suggests that the dataset may be
+    skewed towards these two categories, and there may not be enough
+    representation of products from other categories.
+
+-   [Unique Values-]{.underline} We can see that there are far too few
+    values in some of the sub-categories namely 'Car & Motorbike',
+    'Electronics', 'Home Improvement', 'Musical Instruments' and lastly
+    'Toys & Games'.
+
+#### b. Visualization of the 'status' Variable-
+
+##### Distribution of Counts
+
+```{r}
+amazon$net <- as.numeric(amazon$rating)
+amazon$net[is.na(amazon$net)] <- 0
+amazon$status <- ifelse(amazon$net >=4, "excellent", ifelse(amazon$net <=3, "bad", "good"))
+```
+
+Herein, we have created a categorical variable 'status' based on ratings
+of the products which required us to first turn the 'rating' column into
+a numerical one from categorical where we were also required to fill in
+any missing values with 0. We have the named this variable as 'net'. The
+'status' categorical column specifies if the product has been rated 4 or
+above as 'excellent', 3 or below as 'bad' and anything apart from that
+(between 3 and 4) as 'good'.
+
+```{r}
+#plot 2
+#Review of each category
+ggplot(data = amazon) +
+  geom_bar(mapping = aes(x = status, 
+                         fill = main_category)) +
+  scale_fill_brewer(palette = "Pastel1") +
+  coord_flip() + 
+  labs(x = "",y = "",
+  title = "REVIEW OF EACH CATEGORY") +
+theme(axis.text.x = element_text(
+                                 hjust = 1,
+                                 color = "slateblue1"),
+  axis.text.y = element_text(color = "slateblue1"),
+  plot.title = element_text(face = "bold",
+                            hjust = 0.5,
+                            color = "slateblue4"),
+  legend.text = element_text(color = "slateblue4"),
+  panel.grid.major = element_line(color = "seashell2"),
+  panel.background = element_rect(fill = "white"))
+```
+
+##### Distribution of Proportions
+
+```{r}
+ggplot(amazon,aes(x = status,fill = main_category)) + 
+    geom_bar(position = "fill") +
+  scale_fill_brewer(palette = "GnBu") + 
+  # Set color scheme for legend
+  labs(title = "MAIN CATEGORIES DISTRIBUTED BY THEIR STATUS", x = "Status", y = "Count") +
+  theme(plot.title = element_text(face = "bold",
+                            hjust = 0.5,
+                            color = "hotpink4"),
+    # Customize legend title
+    legend.title = element_text(size = 14, 
+                                face = "bold", 
+                                color = "hotpink4"), 
+        # Customize legend text
+        legend.text = element_text(color = "hotpink4"), 
+        # Customize axis titles
+        axis.title = element_text(size = 14, 
+                                  face = "bold", 
+                                  color = "hotpink4"), 
+        # Customize axis labels
+        axis.text = element_text(size = 12, 
+                                 color = "hotpink4"),
+  panel.background = element_rect(fill = "white")) 
+
+```
+
+#### Analysis-
+
+The bar graph plotted gives us a clear count of each review of the
+product categories meaning that how many ratings each product category
+has received as bad, good or excellent. The next bar graph for
+proportions shows how much proportion of the ratings belong to each
+category of product.
+
+-   [Unusual observations-]{.underline} There are no unusual
+    observations as such as it is a graph plotted over the ratings given
+    by the people and each person's opinion is subjective.
+
+-   [Unique Values-]{.underline} One noticeable feature is that
+    'Computers&Accessories', 'Electronics' and 'Home&Kitchen'
+    sub-categories of products have received the most number of ratings
+    be it bad, good or excellent, as compared to the other
+    sub-categories.
+
+### 2. Numerical Variable:
+
+#### a. Visualization for 'rating' Variable-
+
+```{r}
+ggplot(amazon, aes(x=rating, fill= main_category))+
+geom_bar() + 
+   scale_fill_brewer(palette = "RdPu") + 
+  labs(x="Rating", y="", title="RATING OF PRODUCTS") + 
+  theme(panel.background = element_rect(fill = "white"),
+        plot.title = element_text(face = "bold",
+                            hjust = 0.5,
+                            color = "purple4"),
+         axis.title = element_text(size = 16, 
+                                  face="bold",
+                                  color = "purple4"),
+         axis.text = element_text(color = "purple4"),
+        legend.title = element_text(size = 14, 
+                                    color = "purple4", 
+                                    face="bold"),
+        legend.text = element_text(color = "purple4"))
+```
+
+```{r}
+#plot 3
+#boxplot of rating to check for outliers
+#converting rating as numeric
+rate<- as.numeric( amazon$rating)
+#replacing missing value as 0
+rate<-replace(rate,is.na(rate),0)
+table(is.na(rate))
+ggplot(amazon, aes(y=rate)) +
+  geom_boxplot(fill="lightblue", color="dodgerblue4", alpha=0.5) +
+  labs(x="", y="Rating", title="RATING OF PRODUCTS") +
+  scale_x_discrete(labels=c("Rating")) +
+  theme_minimal(base_size = 16) +
+  theme(plot.title = element_text(face = "bold",
+                            hjust = 0.5,
+                            color = "dodgerblue4"),
+        axis.line = element_line(size = 1,
+                                 color = "white"),
+        axis.text = element_text(color = "steelblue3"),
+        axis.title = element_text(size = 16, 
+                                  color = "dodgerblue4",
+                                  face="bold")) 
+```
+
+##### Analysis-
+
+Here, we have created a bar plot and boxplot of the number of ratings
+recorded. The different colors in each bar gives us the idea of what
+ratings belong to which sub category of products.
+
+-   Identifying Outliers- The outliers can be clearly identified just by
+    observing the two plotted graphs above. Any data point lying at an
+    abnormal distance from the rest of the data points is regarded as an
+    outlier. They can also be identified using Inter Quartile Range(IQR)
+    method and finding out the different quartiles and IQR along with
+    them (done in further steps).
+
+-   Shape of the Data- By Observing the graph plotted above, we can see
+    that the data for rating is negatively skewed.
+
+-   Transformation- The data being skewed needs to be transformed for
+    better visualization and analysis. The accuracy of analysis can be
+    compromised by outliers, which can distort analysis. The accuracy of
+    the analysis can be improved, and more informative results can be
+    produced by removing outliers. Thus we need to apply transformation
+    to normalize the data.
+
+    The outliers can be identified and removed by applying IQR method.
+    Any data point lying outside the range of (q1 - 1.5\*iqr_x , q3 +
+    1.5\*iqr_x) is regarded as an outlier and thus these have been dealt
+    with.
+
+```{r}
+# removing outliers using iqr method
+amazon$net <- as.numeric(amazon$rating)
+amazon$net[is.na(amazon$net)] <- 0
+q1 <- quantile(amazon$net, 0.25)
+q3 <- quantile(amazon$net, 0.75)
+iqr_x <- IQR(amazon$net)
+
+data1 <- amazon[(amazon$net >= q1 - 1.5*iqr_x) & (amazon$net <= q3 + 1.5*iqr_x), ]
+
+```
+
+#### Visualization for 'rating' Variable after removing Outliers-
+
+```{r}
+#boxplot without outliers
+ggplot(data1, aes(y = net)) +
+  geom_boxplot(fill = "#f2c595", color = "black") +
+  labs(x = "", y = "Rating", title = "RATING OF PRODUCTS") +
+  theme_minimal(base_size = 16) +
+  theme(plot.title = element_text(face = "bold",
+                            hjust = 0.5),
+        axis.title = element_text(size = 16, 
+                                  face="bold"))
+  
+```
+
+##### Analysis-
+
+The data appears to be asymmetrical as it is left-skewed.
+
+-   Measure of Central Tendency- Median
+
+```{r}
+median(amazon$net)
+```
+
+-   Explanation for Median- The first box plot and bar plot suggests
+    that the data are left-skewed, therefore **Median** might be a more
+    accurate measure of central tendency than the mean as extreme values
+    have less of an impact on the median.
+
+-   Measure of Spread- It is crucial to employ an outlier-resistant
+    spread measure. The interquartile range (IQR) is a dependable spread
+    indicator that is less susceptible to outliers than the standard
+    deviation (IQR). The box plot made later shows the quartiles, and
+    median of the data.
+
+```{r}
+IQR(amazon$net)
+```
+
+-   Explanation for Choosing IQR- Inter Quartile Range(IQR) is measure
+    of where the majority of the values are. It can be used as a measure
+    of variability if the extreme values are not being recorded
+    precisely. Another important feature of IQR is that extreme values
+    have no impact on it; meaning that it is not affected by outliers.
+
+#### b. Visualization for 'discount_percentage' Variable
+
+Before we plot the graph for 'discount_percentage', we will check the
+type of data and remove any non-numeric character entries from the
+column and also convert it into numerical type just to make sure.
+
+```{r}
+# Check the data type and range of the variable you're trying to log transform
+class(amazon$discount_percentage)
+range(amazon$discount_percentage)
+
+# Convert the variable to numeric if it's a factor or character
+amazon$discount_percentage <- as.numeric(as.character(amazon$discount_percentage))
+
+# Adjust the range of the data or use a different transformation if the variable contains negative values
+amazon$discount_percentage <- amazon$discount_percentage + abs(min(amazon$discount_percentage)) + 1
+```
+
+```{r}
+#displaying the content of the list
+str(amazon$actual_price)
+str(amazon$discount_price)
+```
+
+```{r}
+#converting both actual price and discounted price as numeric
+amazon$actual_price <- as.numeric(amazon$actual_price)
+amazon$discounted_price <- as.numeric(amazon$discounted_price)
+```
+
+```{r}
+#plot 4
+#histogram displaying discount percentage and its count
+ggplot(amazon, aes(x = discount_percentage)) +
+  geom_histogram(alpha = 0.7, 
+                 bins = 30, 
+                 fill = "seashell2", 
+                 color = "wheat4") +
+  labs(x = "Percentage of Discount", 
+       y = "Count", 
+       title = "BEHAVIOR OF DISCOUNT PERCENTAGE OF PRODUCTS") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold",
+                            hjust = 0.5,
+                            color = "wheat4"),
+        axis.line = element_line(size = 1,
+                                 color = "wheat4"),
+        axis.title = element_text(size = 16, 
+                                  face = "bold",
+                                  color = "wheat4"))
+
+```
+
+##### Analysis-
+
+-   Identifying Outliers- By observing the histogram plotted for the
+    'discount_percentage' variable, we can clearly say that this data
+    does not include any outliers there are no such observations at an
+    abnormal distance from the majority of the others. Also, the graph
+    being of 'discount_percentage' itself means that it would not
+    contain any outliers as the discount percentages are bound to vary
+    product to product.
+
+-   Shape of the Data- The data is symmetrical as it follows normal
+    distribution and there are no such outliers present.
+
+-   As the data is already symmetrical, we need not apply any
+    transformation methods to the data. Transformation of data is
+    required only when the data is asymmetrical or has any outliers
+    present.
+
+-   Measure of Central Tendency- Mean
+
+```{r}
+mean(amazon$discount_percentage)
+```
+
+-   Explanation for Mean- To calculate the central tendency of this data
+    we can consider its mean as it would not be hindered due to any
+    outliers as the data is symmetrical and not skewed. The **Mean**
+    would not be affected in this case because of any extreme values as
+    there are none.
+
+-   Measure of Spread- Standard Deviation(SD)
+
+    The Standard Deviation(SD) is a measurement of how much a group of
+    values vary or are dispersed. While a high standard deviation
+    suggests that the values are dispersed over a wider range, a low
+    standard deviation suggests that the values tend to be close to the
+    mean (also known as the anticipated value) of the collection.
+
+```{r}
+sd(amazon$discount_percentage)
+```
+
+-   Explanation for Choosing Standard Deviation(SD)- Standard Deviation
+    is chosen here as it is calculated using all of the column's values,
+    and it is given using the original units of measurement. It reveals
+    the average (or standard) separation between each score and the
+    distribution's mean.
+
+    #### Visualization for 'discount_percentage' Variable with Mean & SD-
+
+```{r}
+# Mean and standard deviation
+mean_value <- mean(amazon$discount_percentage)
+sd_value <- sd(amazon$discount_percentage)
+
+# Plot with mean and sd lines
+ggplot(amazon, aes(x = discount_percentage)) +
+  geom_histogram(alpha = 0.7, 
+                 bins = 30, 
+                 fill = "paleturquoise3", 
+                 color = "darkslategray") +
+  stat_function(fun = function(x) dnorm(x, 
+                                        mean = mean_value, 
+                                        sd = sd_value)*length(amazon$discount_percentage),
+                aes(color = "Mean"), 
+                size = 1.5) +
+  stat_function(fun = function(x) dnorm(x, 
+                                        mean = mean_value, 
+                                        sd = sd_value)*length(amazon$discount_percentage) + mean_value,
+                aes(color = "Mean + SD"), 
+                size = 1.5) +
+  stat_function(fun = function(x) dnorm(x, 
+                                        mean = mean_value, 
+                                        sd = sd_value)*length(amazon$discount_percentage) - mean_value,
+                aes(color = "Mean - SD"), 
+                size = 1.5) +
+  labs(title = "BEHAVIOR OF DISCOUNT PERCENTAGE OF PRODUCTS", 
+       x = "Percentage of Discount", 
+       y = "Count") +
+  theme_minimal(base_size = 16) +
+  theme(plot.title = element_text(face = "bold",
+                            hjust = 0.5,
+                            color = "darkslategray"),
+        axis.line = element_line(size = 1, 
+                                 color = "darkslategray"),
+        axis.text = element_text(color = "darkslategray"),
+        axis.title = element_text(size = 16, 
+                                  color = "darkslategray", 
+                                  face="bold"),
+        legend.position = "bottom",
+        legend.title = element_text(size = 14, 
+                                    color = "darkslategray", 
+                                    face="bold"),
+        legend.text = element_text(size = 12, 
+                                   color = "darkslategray")) +
+  scale_color_manual(values = c("Mean" = "red", 
+                                "Mean + SD" = "blue", 
+                                "Mean - SD" = "darkgreen")) 
+
+```
+
+## BIVARIATE ANALYSIS:
+
+### 1. Numerical against Numerical
+
+#### a. Visualization of 'mean_discounted_price' Against 'mean_actual_price'
+
+```{r}
+#plot 5
+#point graph of mean actual price and mean discounted price
+amazon_summary <- amazon %>%
+group_by(main_category, rating) %>%
+summarise(mean_actual_price = mean(actual_price),
+mean_discounted_price = mean(discounted_price))
+# remove grouping variable
+ggplot(amazon_summary, aes(x = mean_actual_price, y = mean_discounted_price, color = rating)) +
+geom_point(alpha = 0.7, size = 2) +
+scale_x_log10() +
+scale_y_log10() +
+labs(title = "RELATIONSHIP BETWEEN THE MEAN OF ACTUAL PRICE & DISCOUNTED PRICE", x = "Mean Actual Price", 
+     y = "Mean Discount Price", 
+     color = "Rating") +
+theme_bw() +
+  theme(plot.title = element_text(face = "bold",
+                            hjust = 0.5,
+                            color = "hotpink4"),
+        axis.line = element_line(color = "hotpink4"),
+        axis.text = element_text(color = "hotpink4"),
+        axis.title = element_text(size = 16, 
+                                  color = "hotpink4", 
+                                  face="bold"),
+        legend.text = element_text(size = 12, 
+                                   color = "hotpink4"),
+        legend.title = element_text(size = 14, 
+                                    color = "hotpink4", 
+                                    face="bold"))
+```
+
+##### Analysis-
+
+-   Relationship Between the Two Variables- The graph represents a
+    scatter plot that shows the relationship between the 'mean actual
+    price' and 'mean discounted price' of products sold on Amazon. Each
+    point on the plot represents a combination of mean actual and mean
+    discounted price for a specific rating category. The points are
+    colored according to the rating category. The x-axis shows the mean
+    actual price and the y-axis shows the mean discounted price.
+
+```{r}
+cor(amazon_summary$mean_actual_price, amazon_summary$mean_discounted_price, method = c("pearson", "kendall", "spearman"))
+```
+
+```{r}
+cor.test(amazon_summary$mean_actual_price, amazon_summary$mean_discounted_price, method = c("pearson", "kendall", "spearman"))
+```
+
+-   Explanation for Correlation- The Correlation Coefficient can either
+    be negative of positive. This also means that the relationship
+    between the two variables can be negative or positive. Negative
+    coefficient implies that when the value of one variable increases,
+    the other decreases and moves in the opposite direction. Here, as
+    the coefficient is positive, it means that as the value of mean
+    actual price increases, the value of mean discounted price also goes
+    up.
+
+-   Form, Strength & Direction:
+
+    The form of the observed relationship- It is positive and linear,
+    indicating that as the mean actual price increases, the mean
+    discounted price also tends to increase.
+
+    The strength of the relationship- This relationship appears to be
+    moderate to strong, as the points are tightly clustered around a
+    linear trend-line and the correlation coefficient is positively
+    close to 1.
+
+    The direction of the relationship- The direction is positive, which
+    means that the two variables move in the same direction.
+
+-   Relationship in Context of the Data- The relationship between mean
+    actual price and mean discounted price in the context of Amazon
+    sales data suggests that higher-priced products tend to have higher
+    discounted prices as well. This may be due to competitive pricing
+    strategies, seasonal sales, or other factors. Additionally, the
+    relationship between these two variables may be important for
+    sellers to consider when pricing their products, as higher-priced
+    products may need to be discounted more in order to remain
+    competitive.
+
+-   Variablity Observed in the Graph- The variability observed in the
+    plot refers to the spread of the points around the trendline. In
+    this plot, there appears to be moderate variability, as there are
+    some points that deviate from the trendline. This variability
+    corresponds to the strength of the observed relationship, as
+    stronger relationships tend to have less variability or scatter
+    around the trendline, while weaker relationships have more
+    variability. In this case, the moderate variability indicates a
+    moderate to strong relationship between the two variables.
+
+#### b. Visualization of 'discount_percentage' Against 'rating'
+
+Before plotting the graph for discount percentage and rating, we need to
+check the datatype and the range of the variable so as to perform a log
+transformation on the same to get a better visualization.
+
+```{r}
+# Check the data type and range of the variable you're trying to log transform
+class(amazon$discount_percentage)
+range(amazon$discount_percentage)
+
+# Convert the variable to numeric if it's a factor or character
+amazon$discount_percentage <- as.numeric(as.character(amazon$discount_percentage))
+
+# Adjust the range of the data or use a different transformation if the variable contains negative values
+amazon$discount_percentage <- amazon$discount_percentage + abs(min(amazon$discount_percentage)) + 1
+
+str(amazon$actual_price)
+str(amazon$discount_price)
+
+amazon$actual_price <- as.numeric(amazon$actual_price)
+amazon$discounted_price <- as.numeric(amazon$discounted_price)
+```
+
+```{r}
+#plot 6
+#hex plot of rating and discount percentage
+ggplot(amazon, aes(x=rating,y=discount_percentage)) +
+  geom_hex(bins=25) +
+  labs(x="Rating", y="Discount Percentage", title="RELATIONSHIP BETWEEN DISCOUNT PERCENTAGE & RATING") +
+  scale_fill_continuous(name="Frequency") +
+  theme_minimal(base_size = 16) +
+  theme(plot.title = element_text(face = "bold",
+                            hjust = 0.5,
+                            color = "midnightblue"),
+    axis.line = element_line(color = "midnightblue"),
+        axis.text = element_text(size = 12, 
+                                 color = "midnightblue"),
+        axis.title = element_text(size = 12, 
+                                  color = "midnightblue", 
+                                  face="bold"),
+        legend.position = "right",
+        legend.title = element_text(size = 12, 
+                                    color = "midnightblue", 
+                                    face="bold"),
+        legend.text = element_text(size = 12, 
+                                   color = "midnightblue")) +
+  guides(fill = guide_colorbar(title.position = "top"))
+```
+
+-   Relationship between the Two Variables- The given plot is an
+    appropriate plot to visualize the relationship between the two
+    variables rating and discount_percentage. It is a hexagonal bin plot
+    with 25 bins, which shows the distribution of the data points in the
+    plot.
+
+```{r}
+cor(amazon$net, amazon$discount_percentage, method = c("pearson", "kendall", "spearman"))
+```
+
+```{r}
+cor.test(amazon$net, amazon$discount_percentage, method = c("pearson", "kendall", "spearman"))
+```
+
+-   Explanation for Correlation- The plot shows a negative relationship
+    between the two variables, i.e., as rating increases,
+    discount_percentage decreases. The Correlation Coefficient being
+    negative tells us that the two variables are negatively related;
+    meaning that when the value of one increases, the value of the other
+    decreases.
+
+-   Form, Direction & Strength:
+
+    Form of the Relationship- It is a non-linear type of association as
+    when the value of one rises up the other one falls down.
+
+    Direction of the Relationship- The direction is negative as these
+    two variables are inversely related to each other. This is evident
+    from the correlation test because when the bar for one rises up the
+    other degrades and falls down.
+
+    The strength of the Relationship- The strength is moderate, as we
+    can see a general trend of decreasing discount_percentage as rating
+    increases, but there is also a lot of variability in the plot.
+
+-   Relationship in Context of the Data- The negative relationship
+    between rating and discount percentage means that products with
+    higher ratings tend to have lower discounts, while products with
+    lower ratings tend to have higher discounts. This may indicate that
+    highly-rated products are in high demand and therefore do not
+    require steep discounts to sell, while lower-rated products need
+    more incentives such as discounts to sell.
+
+-   Variability Observed in the Graph- The plot shows a lot of
+    variability in the distribution of the data points, which
+    corresponds to the moderate to mild strength of the observed
+    relationship and it is also supported by the correlation coefficient
+    calculated. We can see some areas of the plot with high frequency of
+    data points, indicating a stronger relationship in those areas, but
+    there are also many areas with low frequency, indicating a weaker
+    relationship in those areas. Overall, the plot shows a general trend
+    but also a lot of variability, which corresponds to the moderate
+    strength of the observed relationship.
+
+### 2. Categorical against Numerical
+
+#### a. Visualization of 'discount_percentage' Against 'main_category'
+
+```{r}
+#plot 7
+ggplot(amazon, aes(x = main_category, 
+                   y = discount_percentage, 
+                   fill = main_category)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(x = "Product Category", y = "Discount Percentage", fill = "Product Category",
+       title = "DISCOUNT PERCENTAGE FOR PRODUCT CATEGORIES") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, color = "black", size = 12),
+        axis.text.y = element_text(color = "black"),
+        axis.title = element_text(color = "black", 
+                                  size = 14, 
+                                  face = "bold"),
+        legend.position = "bottom",
+        legend.title = element_text(color = "black", 
+                                    size = 12, 
+                                    face = "bold"),
+        legend.text = element_text(color = "black", 
+                                   size = 12),
+        panel.grid.major = element_line(color = "gray", 
+                                        linetype = "dashed"),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(face = "bold", 
+                                  size = 16, 
+                                  color = "black"))
+```
+
+-   Relationship between the Two Variables- The code creates a boxplot
+    to visualize the distribution of discount percentage across
+    different product categories. Each box represents a product
+    category, and the height of the box indicates the interquartile
+    range (IQR) of the discount percentage within that category. The
+    horizontal line within the box indicates the median value of the
+    discount percentage, and the whiskers extending from the box
+    represent the range of the discount percentage within 1.5 times the
+    IQR. Any points outside of the whiskers are considered outliers.
+
+-   Form, Direction & Strength-
+
+    The form of the relationship is that the distribution of discount
+    percentage varies across different product categories.
+
+    The direction of the relationship is not applicable as we are not
+    comparing two continuous variables.
+
+    The strength of the relationship is moderate, as there is noticeable
+    variation in the distribution of discount percentage across the
+    different product categories.
+
+-   Relationship with respect to the Context of Dataset- This
+    relationship means that different product categories have different
+    levels of discount percentages. For example, the "Sports and
+    Outdoors" category generally has higher discount percentages than
+    the "Home and Kitchen" category. This could be due to a number of
+    factors, such as the competitive landscape within each category, the
+    seasonality of products within each category, or the perceived value
+    of products within each category.
+
+-   Variability Observed- The variability in the plot is moderate, as
+    there is noticeable variation in the distribution of discount
+    percentage across the different product categories. This variability
+    corresponds to the moderate strength of the relationship that was
+    calculated in , as there is not a clear trend or pattern in the
+    distribution of discount percentage across the product categories,
+    but there is still noticeable variation that suggests there may be
+    some underlying factors that are influencing the discount
+    percentages within each category.
+
+#### b. Visualization of 'net' Against 'status'
+
+```{r}
+#plot 8
+#bar plot of net sales and status
+ggplot(amazon, aes(x = status, y = net, fill = main_category)) +
+  geom_col() + 
+  scale_fill_brewer(palette = "Spectral") +
+  coord_flip() +
+  labs(x = "Status", y = "Net Sales", fill = "Product Category",
+       title = "RATING CLASSIFICATION") +
+  theme_bw() +
+  theme(axis.text.x = element_text(size = 12, 
+                                   color = "red4"),
+        axis.text.y = element_text(size = 12, 
+                                   color = "red4"),
+        axis.title = element_text(size = 14, 
+                                  color = "red4", 
+                                  face = "bold"),
+        legend.position = "right",
+        legend.title = element_text(size = 12, 
+                                    color = "red4", 
+                                    face = "bold"),
+        legend.text = element_text(size = 12, 
+                                   color = "red4"),
+        panel.grid.major = element_line(color = "gray", 
+                                        linetype = "dashed"),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(size = 16, 
+                                  color = "red4", 
+                                  face = "bold"))
+
+```
+
+-   Relationship between the Two Variables- We can clearly interpret
+    from the graph that each bar of the status of the rating have their
+    unique number of observations in the rating section. The 'bad'
+    status is obtained from least number of ratings that have been got,
+    while the 'excellent' status has be obtained from most number of
+    ratings. 'good' status has been interpreted from a moderate number
+    of ratings observed. Thus we see that the relationship between these
+    two variables is strong.
+
+-   Form, Direction & Strength-
+
+    The relationship takes the shape that ratings are distributed
+    differently across various rating statuses.
+
+    Since we are not comparing two continuous variables, the direction
+    of the link is irrelevant.
+
+    Given the apparent fluctuation in the distribution of ratings among
+    the various rating statuses, the link is clearly strong.
+
+-   Relationship with respect to the Context of Dataset- As a result of
+    this relationship, different rating statuses provide various amounts
+    of ratings. This could be caused by a variety of things, including
+    the level of competition in each category, the seasonality of the
+    products, or the perceived worth of the goods in each category.
+
+-   Variability Observed- Because the distribution of the rating among
+    the various rating status varies noticeably, the plot's fluctuation
+    is strong. As there is a discernible trend or pattern in the
+    distribution of rating across the rating status, this variability
+    corresponds to the atrong strength of the relationship that was
+    calculated in. There may be some underlying factors that are
+    influencing the rating within each rating status category.
+
+## *References-*
+
+*We have taken help from the following websites-*
+
+1.  <https://universeofdatascience.com/>
+
+2.  <https://www.marsja.se/>
+
+3.  <http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf>
+
+4.  <http://rstudio-pubs-static.s3.amazonaws.com/5312_98fc1aba2d5740dd849a5ab797cc2c8d.html>
