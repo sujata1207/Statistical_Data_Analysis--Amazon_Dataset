@@ -1,0 +1,358 @@
+---
+title: "DAB501 Final Project"
+output:
+  pdf_document: default
+  html_notebook: default
+  html_document:
+    df_print: paged
+---
+
+## Student Information
+
+-   Name: Vidya Biradar
+
+    ID: 0828878
+
+    Signature: vidya
+
+-   Name: Sujata Biswas
+
+    ID: 0832706
+
+    Signature: Sujata
+
+**Academic Integrity**
+
+We, Vidya and Sujata, hereby state that I have not communicated with or gained information in any way from any person or resource that would violate the College's academic integrity policies, and that all work is my own.
+
+## Packages and Data
+
+```{r}
+#importing a ggplot2 library
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(dplyr)
+library(caret)
+library(corrgram)
+```
+
+```{r}
+# Replace the _____ with the correct file name
+df <- read_csv(here('a2.csv'))
+```
+
+## DATASET DESCRIPTION:
+
+This analysis will be based on the dataset that contains information from more than 1,000 Amazon products' ratings and reviews, as reported on the company's official website. This dataset includes various variables including-
+
+| VARIABLE            | MEANING                                                       |
+|-------------------|-----------------------------------------------------|
+| product_id          | Product ID                                                    |
+| product_name        | Name of the Product                                           |
+| category            | Category to Which the Product Belongs                         |
+| discounted_price    | Discounted Price of the Product                               |
+| actual_price        | Actual Price of the Product                                   |
+| discount_percentage | Percentage of Discount on the Product                         |
+| rating              | Rating of the Product                                         |
+| rating_count        | Number of people who rated for the Amazon rating of a Product |
+| about_product       | Description about the Product                                 |
+| user_id             | ID of the user who wrote review for the Product               |
+| user_name           | Name of the user who wrote review for the Product             |
+| review_id           | ID of the Review given by the User                            |
+| review_title        | Brief Review                                                  |
+| review_content      | Detailed Review                                               |
+| img_link            | Image Link of the Product                                     |
+| product_link        | Official Website Link of the Product                          |
+
+## MODELING: First pair of variables
+
+### Question 1
+
+The explanatory variable is the independent variable that is used to explain or predict the response variable. In this dataset, the explanatory variables is "[**discount_percentage**]{.underline}".
+
+### Question 2
+
+The response variable is the dependent variable that is being explained or predicted by the explanatory variable. In this dataset, the response variable is "[**actual_price**]{.underline}".
+
+### Question 3
+
+To evaluate that we have chosen the right pair of variables for the linear regression model, we will plot a correlogram.
+
+```{r}
+#converting rating as numeric
+df$rating<- as.numeric( amazon$rating)
+
+#replacing missing value as 0
+df$rating<-replace(rate,is.na(amazon$rating),0)
+table(is.na(df$rating))
+```
+
+```{r}
+#data cleaning
+df$discounted_price <- gsub("[^0-9]", "", amazon$discounted_price)
+df$actual_price <- gsub("[^0-9]", "", amazon$actual_price)
+df$rating_count <- gsub("[^0-9]", "", amazon$rating_count)
+df$discount_percentage <- gsub("[^0-9]", "", amazon$discount_percentage)
+```
+
+```{r}
+# Check the data type and range of the variable you're trying to log transform
+class(df$discount_percentage)
+range(df$discount_percentage)
+
+# Convert the variable to numeric if it's a factor or character
+df$discount_percentage <- as.numeric(df$discount_percentage)
+class(df$discount_percentage)
+
+# Adjust the range of the data or use a different transformation if the variable contains negative values
+df$discount_percentage <- df$discount_percentage + abs(min(df$discount_percentage)) + 1
+
+```
+
+```{r}
+#converting both actual price and discounted price as numeric
+df$actual_price <- as.numeric(df$actual_price)
+df$discounted_price <- as.numeric(df$discounted_price)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+
+```
+
+```{r}
+#The difference is that while correlation measures the strength of an association between two variables, regression quantifies the nature of the relationship.
+corrgram(amazon, lower.panel=panel.shade, upper.panel=panel.cor)
+```
+
+By plotting this correlation graph for all the variables, we have concluded that "discounted_price" and "actual price" variables are much strongly linearly related as compared to the other variables (discarding the relationship between "rating" and "net" as they are one and the same variable).
+
+The strength of the relationship can be measured by finding out the correlation coefficient:
+
+```{r}
+#quantify the strength of the relationship with the correlation coefficient
+cor(df$actual_price, df$discounted_price)
+```
+
+```{r}
+#full output of the linear regression model
+options(scipen = 999)
+df<-amazon[,5:6]
+lm_model<- lm(actual_price ~discounted_price, data = df)
+summary(lm_model)
+plot(lm_model)
+
+```
+
+The full output of the regression model is shown above, by using the lm method shown the output which includes the residuals in negative numbers and we will get intercept , r-square and adjusted r-square to plot the linear regression line.
+
+Explanation for the summary of linear regression model:
+
+***Residuals-*** Gives us the difference between the predicted and the actual values of the variables.
+
+***Coefficients-*** The intercept and predictor variable(s) estimated coefficients are shown in this section together with their standard errors, t-values, and p-values.
+
+***Residual Standard Error-*** This is an estimation of the residuals' standard deviation.
+
+***Multiple R-squared-*** The proportion of a dependent variable's variance that can be accounted for by its independent variables.
+
+***Adjusted R-squared-*** This R-squared calculation accounts for the number of predictor variables in the model. It functions like a modified form of R-squared, adding accuracy and dependability by taking into account the influence of additional independent factors that can skew the outcomes of R-squared measurements.
+
+When Regression line is plotted to the chosen pair of variables-
+
+```{r}
+# Plot the data and the linear regression line
+plot(df$discounted_price, 
+     df$actual_price, 
+     main = "Linear Regression", 
+     xlab = "Discounted Price", 
+     ylab = "Actual Price")
+abline(lm_model, 
+       col = "red")
+```
+
+For better understanding, we have taken logs of both the variables so that it becomes easier to understand and also visually better.
+
+```{r}
+# Create a copy of the original data frame with log-transformed variables
+df_log <- df
+df_log$discounted_price <- log(df_log$discounted_price)
+df_log$actual_price <- log(df_log$actual_price)
+
+# Fit linear regression
+lm_model <- lm(actual_price ~ discounted_price, data = df_log)
+
+# Plot the data and the linear regression line
+plot(df_log$discounted_price, 
+     df_log$actual_price, 
+     main = "Linear Regression", 
+     xlab = "Log of Discounted Price", 
+     ylab = "Log of Actual Price")
+abline(lm_model, 
+       col = "red")
+
+
+```
+
+```{r}
+# This function takes in a value for the slope and intercept of a line and plots the original data points plus the specified line. It also shows the residuals and calculates the sum of the squares of the residuals and prints that in the title.
+
+best_line_dis_actual <- function(slope, intercept, residuals = TRUE) {
+  a1 <- amazon %>% mutate(y_predicted = intercept + slope * log(discounted_price),  
+                          square_residuals = (log(actual_price) - y_predicted)^2)
+
+  ssr <- a1 %>% summarize(ssr = round(sum(square_residuals), 0))
+  
+  if (residuals) {
+    p <- ggplot(a1, aes(x = log(discounted_price), y = log(actual_price))) +
+          geom_point(shape = 21, fill = 'skyblue', size = 2) + 
+          geom_line(aes(x = log(discounted_price), y = y_predicted), colour = 'blue') + 
+          geom_segment(aes(x = log(discounted_price), y = log(actual_price), 
+                           xend = log(discounted_price), yend = y_predicted), linetype = 2) +
+          ggtitle(paste0("Sum of Squared Resdiduals: ", ssr[[1]]))
+  } else {    
+    p <- ggplot(a1, aes(x = log(discounted_price), y = log(actual_price))) +
+          geom_point(shape = 21, fill = 'skyblue', size = 2) + 
+          geom_line(aes(x = log(discounted_price), y = y_predicted), colour = 'blue')
+  }
+  p
+}
+```
+
+```{r}
+best_line_dis_actual(slope = 0.79493, intercept = 2.12074)
+```
+
+```{r}
+best_line_dis_actual(slope = 0.79493, intercept = 2.12074,residuals = FALSE)
+```
+
+The above graph is to find out the best fit line of the model. Plotted graph with residuals and without residuals to get an clear understanding of the regression line.
+
+### Question 4
+
+The equation following the standard context
+
+y = m\*x + c
+
+for our model would be:
+
+***actual_price = (0.20048)\* discounted_price + (4962.05983)***
+
+where b0 (4962.05983) is the y-intercept, and b1 (0.20048 )is the regression coefficient for the discounted_price variable.
+
+### Question 5
+
+The intercept b0 represents the estimated mean value of discounted_price when actual_price is zero. However, this value does not make sense in the context of the data since actual_price cannot be zero. Therefore, the intercept value is not meaningful in this case.
+
+### Question 6
+
+Since the intercept value is not meaningful in the context of the data, it does not serve a useful purpose in this model.
+
+### Question 7
+
+The slope coefficient b1 represents the estimated change in discounted_price per unit increase in actual_price. In other words, for each additional unit of actual_price, we would expect the discounted_price to change by b1 units, all other factors being equal.
+
+## MODEL DIAGNOSTICS
+
+To assess whether the linear model is reliable, we need to check for
+
+(1) linearity
+
+(2) nearly normal residuals
+
+(3) constant variability.
+
+**Question 1**
+
+```{r}
+summary(lm_model)
+```
+
+Since the equation for our model is ***actual_price = (0.20048)\* discounted_price + (4962.05983),*** we can use this in a mutate statement to calculated our predicted values.
+
+Once we have our predicted values we can calculate the residuals as
+
+***residuals = actual values − predicted values***
+
+```{r}
+amazon_mod <- df %>% mutate(pred_aprice = 4962.05983 + 0.20048 * discounted_price, 
+                              residuals = actual_price - pred_aprice)
+
+amazon_mod %>% select(actual_price, pred_aprice, discounted_price, residuals) %>% head()
+```
+
+### Question 2
+
+```{r}
+#plot to check the linearity(discounted price and residuals)
+ggplot(amazon_mod, aes(x = log(discounted_price), y = residuals)) +
+  geom_point() + 
+  geom_hline(yintercept = 0)
+```
+
+To check the assumption of linearity, we want to see a random pattern of points with no clear trends or patterns. If there is a clear pattern in the plot, it suggests that the relationship between the predictor and the response variable may not be linear.
+
+Based on the plot , it appears that there is no clear pattern in the data. The points are scattered randomly around the horizontal line at y = 0, indicating that the assumption of linearity is met for this dataset. Therefore, we can conclude that a linear regression model is appropriate for this dataset.
+
+### Question 3
+
+To check the assumption of nearly normal residuals, we can create a histogram or a density plot of the residuals.
+
+```{r}
+ggplot(amazon_mod, 
+       aes(x = residuals)) +
+  geom_histogram(color = 'black', 
+                 fill = 'lightblue', 
+                 bins = 30) +
+  labs(x = "Residuals", 
+       y = "Frequency", 
+       title = "Histogram of Residuals")
+```
+
+If the histogram or the density plot of the residuals is approximately bell-shaped and centered around zero, then the assumption of nearly normal residuals is likely to be met. However, if the distribution of the residuals is skewed or has multiple peaks, it indicates that the normality assumption is not met. The residuals histogram has only one peak at the center, so we can assume the residuals are normally distributed, thus it is unimodal and symmetrical.
+
+### Question 4
+
+To check the assumption of constant variability, we can create a scatter plot of the residuals against the predicted values.
+
+```{r}
+ggplot(amazon_mod, aes(x = log(discounted_price), y = residuals)) +
+  geom_point() + 
+  geom_hline(yintercept = 0) +
+  geom_hline(yintercept = 100, colour = 'blue') +
+  geom_hline(yintercept = -100, colour = 'blue')
+```
+
+At all values of the predictor, the residuals' spread ought to be about the same.
+
+Looking at the plot, it appears that the assumption of constant variability is not fully met. The spread of the residuals appears to increase slightly as the log of discounted price increases, which suggests that the variability of the residuals is not constant across all levels of the predictor variable. Additionally, there are a few outliers with large residuals that fall outside of the blue lines, indicating that there may be some non-constant variability. However, it's worth noting that the spread of the residuals doesn't appear to be dramatically different at different values of the predictor, so the violation of constant variability may not be severe enough to cause major issues with the linear regression model.
+
+## CONCLUSION
+
+### Question 1
+
+Based on the analysis of the linear model using the Amazon dataset, we can conclude that the model is reliable for making predictions. The four assumptions of
+
+-   linearity
+
+-   nearly normal residuals
+
+-   constant variability
+
+-   independence
+
+have all been assessed.
+
+From the Model Diagnosis we can conclude that-
+
+-   The plot of the residuals against the discounted price showed no clear pattern, indicating that the assumption of linearity is met.
+
+-   The histogram of residuals showed a roughly bell-shaped distribution around zero, indicating that the assumption of nearly normal residuals is met.
+
+-   However, the scatter plot of the residuals against the predicted values showed some evidence of non-constant variability, with the spread of the residuals appearing to increase slightly as the log of discounted price increases.
+
+-   Finally, the assumption of independence was not assessed in this analysis.
+
+Therefore, we can conclude that the linear model is reliable for making predictions based on the Amazon dataset.
